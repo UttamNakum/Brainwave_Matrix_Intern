@@ -19,7 +19,7 @@ A beautiful and educational Flutter Quiz App that fetches multiple-choice questi
 🖼️ Stylish UI with background images and responsive design
 
 
-###🔧 Technologies Used
+### 🔧 Technologies Used
 Flutter (Dart)
 
 HTTP package
