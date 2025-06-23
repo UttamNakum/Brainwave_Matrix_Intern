@@ -1,16 +1,34 @@
 # quiz_app
 
-A Quiz application wihich generate random questions for users
+📚 Flutter Quiz App – API Integrated with Score & Answers Summary
+A beautiful and educational Flutter Quiz App that fetches multiple-choice questions from the Open Trivia API. Users can choose a category, answer a series of questions, view their score, and review all correct answers at the end.
 
-## Getting Started
+## ✨ Features
+🎯 Category Selection Dropdown
 
-This project is a starting point for a Flutter application.
+🌐 Live API Integration using Open Trivia DB
 
-A few resources to get you started if this is your first Flutter project:
+❓ Multiple Choice Questions with 4 options
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+🧠 Correct Answer Evaluation with scoring
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+✅ Result Screen with total score and performance
+
+📋 Review Screen showing all questions & correct answers
+
+🖼️ Stylish UI with background images and responsive design
+
+
+### 🔧 Technologies Used
+Flutter (Dart)
+
+HTTP package
+
+Open Trivia DB API
+
+Stateful Widgets
+
+Navigator Routing
+
+Material Design
+
