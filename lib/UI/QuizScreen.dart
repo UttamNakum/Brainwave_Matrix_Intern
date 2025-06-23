@@ -1,132 +1,170 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:percent_indicator/circular_percent_indicator.dart';
 import 'package:quiz_app/services/quiz_service.dart';
 
 import '../model/QuizQuestion.dart';
 import 'ResultScreen.dart';
 
 class QuizScreen extends StatefulWidget {
-  final int categoryId;
+  final List<QuizQuestion> questions;
 
-  const QuizScreen({required this.categoryId});
+  QuizScreen({required this.questions});
 
   @override
   State<QuizScreen> createState() => _QuizScreenState();
 }
 
-class _QuizScreenState extends State<QuizScreen> {
+class _QuizScreenState extends State<QuizScreen> with SingleTickerProviderStateMixin {
   List<QuizQuestion> questions = [];
   int currentQuestionIndex = 0;
   int score = 0;
   bool isLoading = true;
+  late Timer timer;
+  int timeLeft = 15;
+  double percent = 1.0;
+
+  late AnimationController _shakeController;
+  late Animation<double> _shakeAnimation;
+
 
   @override
   void initState() {
     super.initState();
-    loadQuestions();
+
+    _shakeController = AnimationController(
+      vsync: this,
+      duration: Duration(milliseconds: 500),
+    );
+
+    _shakeAnimation = Tween<double>(begin: 0, end: 8).chain(CurveTween(curve: Curves.elasticIn)).animate(_shakeController);
+
+    startTimer();
   }
 
-  Future<void> loadQuestions() async {
-    try{
-      final data = await QuizService.fetchQuizQuestions(categoryId : widget.categoryId);
+  void startTimer() {
+    timeLeft = 30;
+    percent = 1.0;
+    timer = Timer.periodic(Duration(seconds: 1), (timer) {
       setState(() {
-        questions = data;
-        isLoading = false;
+        timeLeft--;
+        percent = timeLeft / 30;
+        if (timeLeft <= 0) {
+          timer.cancel();
+          moveToNextQuestion(); // auto-skip or mark incorrect
+        }
+        if (timeLeft <=8 ) {
+          _shakeController.forward(from: 0); // 🔔 Start shake
+        }
       });
-    }catch(e){
-      print('Error loading questions: $e');
-    }
+    });
   }
 
-  void checkAnswer(String selectedOption) {
-    final currentQuestion = questions[currentQuestionIndex];
-
-    if (selectedOption == currentQuestion.correctAnswer) {
-      score++;
-    }
-
-    if(currentQuestionIndex < questions.length - 1){
+  void moveToNextQuestion() {
+    if (currentQuestionIndex < widget.questions.length - 1) {
       setState(() {
         currentQuestionIndex++;
       });
-    }else{
+      startTimer(); // reset timer for next question
+    } else {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (context) => ResultScreen(score: score, total: questions.length, questions: questions)
+          builder: (context) => ResultScreen(
+            score: score,
+            total: widget.questions.length,
+            questions: widget.questions,
+          ),
         ),
       );
     }
   }
 
   @override
+  void dispose() {
+    timer.cancel();
+    _shakeController.dispose();
+    super.dispose();
+  }
+
+  void checkAnswer(String selected) {
+    timer.cancel();
+    final currentQuestion = widget.questions[currentQuestionIndex];
+    if (selected == currentQuestion.correctAnswer) {
+      score++;
+    }
+    moveToNextQuestion();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final question = widget.questions[currentQuestionIndex];
+
     return Scaffold(
-      body: isLoading
-          ? Center(child: CircularProgressIndicator())
-          : Stack(
+      body: Stack(
         children: [
-          //Background Image
           Positioned.fill(
-            child: Image.asset(
-              'images/background.png', // ✅ Make sure this image exists in your assets
-              fit: BoxFit.cover,
+            child: Image.asset('images/background.png', fit: BoxFit.cover),
+          ),
+          Container(
+            margin: const EdgeInsets.only(top: 40),
+            padding: const EdgeInsets.all(20.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // 🔄 Timer & Question Number
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text("Q${currentQuestionIndex + 1}/${widget.questions.length}",
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    AnimatedBuilder(
+                      animation: _shakeAnimation,
+                      builder: (BuildContext context, Widget? child) {
+                        return Transform.translate(
+                          offset: Offset(_shakeAnimation.value,0),
+                          child: CircularPercentIndicator(
+                          radius: 30.0,
+                          lineWidth: 6.0,
+                          percent: percent.clamp(0.0, 1.0),
+                          center: Text("$timeLeft s"),
+                          progressColor: timeLeft <= 10 ? Colors.red : Colors.green,
+                          backgroundColor: Colors.grey,
+                        ),
+                        );
+                      },
+                    ),
+                  ],
+                ),
+                SizedBox(height: 20),
+                // 🔹 Question Text
+                Text(
+                  question.question,
+                  style: TextStyle(fontSize: 20),
+                ),
+                SizedBox(height: 20),
+                // 🔘 Options
+                ...question.options.map((option) {
+                  return Container(
+                    margin: const EdgeInsets.symmetric(vertical: 8),
+                    child: ElevatedButton(
+                      onPressed: () => checkAnswer(option),
+                      style: ElevatedButton.styleFrom(
+                        padding: EdgeInsets.symmetric(vertical: 14),
+                        backgroundColor:Color.fromARGB(255, 243, 184, 252),
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                      ),
+                      child: Text(option),
+                    ),
+                  );
+                }),
+              ],
             ),
           ),
-
-          //Foreground content
-          Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: Center(
-              child: Container(
-                padding: EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.9),
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black26,
-                      blurRadius: 10,
-                      offset: Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Text(
-                      "Q${currentQuestionIndex + 1}/${questions.length}",
-                      style: TextStyle(
-                          fontSize: 18, fontWeight: FontWeight.bold),
-                    ),
-                    SizedBox(height: 16),
-                    Text(
-                      questions[currentQuestionIndex].question,
-                      style: TextStyle(fontSize: 20),
-                    ),
-                    SizedBox(height: 20),
-                    ...questions[currentQuestionIndex].options.map((option) {
-                      return Container(
-                        margin: const EdgeInsets.symmetric(vertical: 8),
-                        child: ElevatedButton(
-                          onPressed: () => checkAnswer(option),
-                          child: Text(option),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Color.fromARGB(255, 242, 184, 252),
-                            foregroundColor: Colors.white,
-                            padding: EdgeInsets.symmetric(vertical: 12),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(30),
-                            ),
-                          ),
-                        ),
-                      );
-                    }),
-                  ],
-                ),
-              ),
-            ),
-          )
         ],
       ),
     );

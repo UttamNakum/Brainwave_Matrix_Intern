@@ -36,12 +36,23 @@ class _CategorySelectionScreenState extends State<CategorySelectionScreen> {
     }
   }
 
-  void startQuiz() {
+  Future<void> startQuiz() async {
     if(selectedCategory != null){
+      final questions = await QuizService.fetchQuizQuestions(
+          categoryId: selectedCategory!.id);
+
+      // Check if no questions are returned
+      if (questions.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("No questions found in this category.")),
+        );
+        return;
+      }
+
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => QuizScreen(categoryId: selectedCategory!.id),
+          builder: (context) => QuizScreen(questions: questions),
         ),
       );
     }
