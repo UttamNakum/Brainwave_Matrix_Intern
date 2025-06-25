@@ -8,7 +8,7 @@ class ResultScreen extends StatelessWidget {
   final int total;
   final List<QuizQuestion> questions;
 
-  const ResultScreen({
+  const ResultScreen({super.key,
     required this.score,
     required this.total,
     required this.questions
@@ -84,7 +84,6 @@ class ResultScreen extends StatelessWidget {
                   ),
                 ),
                 SizedBox(height: 20),
-
                 //Correct Answers List
                 Expanded(
                   child: Container(

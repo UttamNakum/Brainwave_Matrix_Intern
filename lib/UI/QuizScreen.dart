@@ -2,15 +2,14 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:percent_indicator/circular_percent_indicator.dart';
-import 'package:quiz_app/services/quiz_service.dart';
 
 import '../model/QuizQuestion.dart';
 import 'ResultScreen.dart';
 
 class QuizScreen extends StatefulWidget {
-  final List<QuizQuestion> questions;
 
-  QuizScreen({required this.questions});
+  final List<QuizQuestion> questions;
+  const QuizScreen({super.key, required this.questions});
 
   @override
   State<QuizScreen> createState() => _QuizScreenState();
@@ -28,7 +27,6 @@ class _QuizScreenState extends State<QuizScreen> with SingleTickerProviderStateM
   late AnimationController _shakeController;
   late Animation<double> _shakeAnimation;
 
-
   @override
   void initState() {
     super.initState();
@@ -38,8 +36,9 @@ class _QuizScreenState extends State<QuizScreen> with SingleTickerProviderStateM
       duration: Duration(milliseconds: 500),
     );
 
-    _shakeAnimation = Tween<double>(begin: 0, end: 8).chain(CurveTween(curve: Curves.elasticIn)).animate(_shakeController);
-
+    _shakeAnimation = Tween<double>(begin: 0, end: 8)
+        .chain(CurveTween(curve: Curves.elasticIn))
+        .animate(_shakeController);
     startTimer();
   }
 
